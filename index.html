@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+        <title>Live2D Simple</title>
+    </meta>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=4.0">
+    </meta>
+</head>
+<!-- オフスクリーンの頂点シェーダー -->
+<script id="vs" type="x-shader/x-vertex">
+attribute vec3 position;
+attribute vec4 color;
+attribute vec2 textureCoord;
+uniform   mat4 mvpMatrix;
+uniform   bool reversal;
+varying   vec4 vColor;
+varying   vec2 vTextureCoord;
+
+void main(void){
+    vColor = color;
+    // trueならシェーダーで上下反転させる
+    if(reversal){
+        vTextureCoord = vec2(textureCoord.x, 1.0 - textureCoord.y);
+    }else{
+        vTextureCoord = textureCoord;
+    }
+    gl_Position   = mvpMatrix * vec4(position, 1.0);
+}
+</script>
+<!-- オフスクリーンのフラグメントシェーダー -->
+<script id="fs" type="x-shader/x-fragment">
+precision mediump float;
+uniform bool      multi_tex;
+uniform sampler2D texture0;
+uniform sampler2D texture1;
+varying vec4      vColor;
+varying vec2      vTextureCoord;
+
+void main(void){
+    if(multi_tex){
+        vec4 smpColor0 = texture2D(texture0, vTextureCoord);
+        vec4 smpColor1 = texture2D(texture1, vTextureCoord);
+        gl_FragColor  = smpColor0 + smpColor1;
+    }else{
+        vec4 smpColor0 = texture2D(texture0, vTextureCoord);
+        gl_FragColor  = vColor * smpColor0;
+    }
+}
+</script>
+<!-- エフェクト用の頂点シェーダー -->
+<script id="effect_vs" type="x-shader/x-vertex">
+attribute vec3 position;
+attribute vec4 color;
+attribute vec2 textureCoord;
+uniform   mat4 mvpMatrix;
+varying   vec4 vColor;
+varying   vec2 vTextureCoord;
+
+void main(void){
+    vColor        = color;
+    vTextureCoord = textureCoord;
+    gl_Position   = mvpMatrix * vec4(position, 1.0);
+}
+</script>
+<!-- エフェクト用のフラグメントシェーダー -->
+<script id="effect_fs" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform sampler2D texture;
+uniform float     weight[10];   // ADD
+uniform bool      horizontal;   // ADD
+varying vec4      vColor;
+varying vec2      vTextureCoord;
+
+void main(void){
+    float tFrag = 1.0 / 512.0;
+    vec2 fc;
+    vec4 destColor =  vec4(0.0);
+
+    if(horizontal){
+        fc = vec2(gl_FragCoord.s, 512.0 - gl_FragCoord.t);
+        destColor += texture2D(texture, (fc + vec2(-9.0, 0.0)) * tFrag).rgba * weight[9];
+        destColor += texture2D(texture, (fc + vec2(-8.0, 0.0)) * tFrag).rgba * weight[8];
+        destColor += texture2D(texture, (fc + vec2(-7.0, 0.0)) * tFrag).rgba * weight[7];
+        destColor += texture2D(texture, (fc + vec2(-6.0, 0.0)) * tFrag).rgba * weight[6];
+        destColor += texture2D(texture, (fc + vec2(-5.0, 0.0)) * tFrag).rgba * weight[5];
+        destColor += texture2D(texture, (fc + vec2(-4.0, 0.0)) * tFrag).rgba * weight[4];
+        destColor += texture2D(texture, (fc + vec2(-3.0, 0.0)) * tFrag).rgba * weight[3];
+        destColor += texture2D(texture, (fc + vec2(-2.0, 0.0)) * tFrag).rgba * weight[2];
+        destColor += texture2D(texture, (fc + vec2(-1.0, 0.0)) * tFrag).rgba * weight[1];
+        destColor += texture2D(texture, (fc + vec2( 0.0, 0.0)) * tFrag).rgba * weight[0];
+        destColor += texture2D(texture, (fc + vec2( 1.0, 0.0)) * tFrag).rgba * weight[1];
+        destColor += texture2D(texture, (fc + vec2( 2.0, 0.0)) * tFrag).rgba * weight[2];
+        destColor += texture2D(texture, (fc + vec2( 3.0, 0.0)) * tFrag).rgba * weight[3];
+        destColor += texture2D(texture, (fc + vec2( 4.0, 0.0)) * tFrag).rgba * weight[4];
+        destColor += texture2D(texture, (fc + vec2( 5.0, 0.0)) * tFrag).rgba * weight[5];
+        destColor += texture2D(texture, (fc + vec2( 6.0, 0.0)) * tFrag).rgba * weight[6];
+        destColor += texture2D(texture, (fc + vec2( 7.0, 0.0)) * tFrag).rgba * weight[7];
+        destColor += texture2D(texture, (fc + vec2( 8.0, 0.0)) * tFrag).rgba * weight[8];
+        destColor += texture2D(texture, (fc + vec2( 9.0, 0.0)) * tFrag).rgba * weight[9];
+    }else{
+        fc = gl_FragCoord.st;
+        destColor += texture2D(texture, (fc + vec2(0.0,-9.0)) * tFrag).rgba * weight[9];
+        destColor += texture2D(texture, (fc + vec2(0.0,-8.0)) * tFrag).rgba * weight[8];
+        destColor += texture2D(texture, (fc + vec2(0.0,-7.0)) * tFrag).rgba * weight[7];
+        destColor += texture2D(texture, (fc + vec2(0.0,-6.0)) * tFrag).rgba * weight[6];
+        destColor += texture2D(texture, (fc + vec2(0.0,-5.0)) * tFrag).rgba * weight[5];
+        destColor += texture2D(texture, (fc + vec2(0.0,-4.0)) * tFrag).rgba * weight[4];
+        destColor += texture2D(texture, (fc + vec2(0.0,-3.0)) * tFrag).rgba * weight[3];
+        destColor += texture2D(texture, (fc + vec2(0.0,-2.0)) * tFrag).rgba * weight[2];
+        destColor += texture2D(texture, (fc + vec2(0.0,-1.0)) * tFrag).rgba * weight[1];
+        destColor += texture2D(texture, (fc + vec2(0.0, 0.0)) * tFrag).rgba * weight[0];
+        destColor += texture2D(texture, (fc + vec2(0.0, 1.0)) * tFrag).rgba * weight[1];
+        destColor += texture2D(texture, (fc + vec2(0.0, 2.0)) * tFrag).rgba * weight[2];
+        destColor += texture2D(texture, (fc + vec2(0.0, 3.0)) * tFrag).rgba * weight[3];
+        destColor += texture2D(texture, (fc + vec2(0.0, 4.0)) * tFrag).rgba * weight[4];
+        destColor += texture2D(texture, (fc + vec2(0.0, 5.0)) * tFrag).rgba * weight[5];
+        destColor += texture2D(texture, (fc + vec2(0.0, 6.0)) * tFrag).rgba * weight[6];
+        destColor += texture2D(texture, (fc + vec2(0.0, 7.0)) * tFrag).rgba * weight[7];
+        destColor += texture2D(texture, (fc + vec2(0.0, 8.0)) * tFrag).rgba * weight[8];
+        destColor += texture2D(texture, (fc + vec2(0.0, 9.0)) * tFrag).rgba * weight[9];
+    }
+    // 輝度アップ
+    destColor += destColor;
+    destColor += destColor;
+    gl_FragColor = vec4(destColor);
+}
+</script>
+<style>
+    p{
+        width:512px;
+        text-align: center;
+    }
+    button{
+        margin: -20px 5px 0 -5px;
+        background: #3498db;
+        background-image: -webkit-linear-gradient(top, #3498db, #2980b9);
+        background-image: -moz-linear-gradient(top, #3498db, #2980b9);
+        background-image: linear-gradient(to bottom, #3498db, #2980b9);
+        -webkit-border-radius: 11;
+        -moz-border-radius: 11;
+        border-radius: 11px;
+        font-family: Arial;
+        color: #ffffff;
+        font-size: 20px;
+        padding: 10px 20px 10px 20px;
+        text-decoration: none;
+    }
+    button:hover{
+        background: #3cb0fd;
+        background-image: -webkit-linear-gradient(top, #3cb0fd, #3498db);
+        background-image: -moz-linear-gradient(top, #3cb0fd, #3498db);
+        background-image: linear-gradient(to bottom, #3cb0fd, #3498db);
+        text-decoration: none;
+    }
+</style>
+<body onload="Simple()">
+    <canvas id="glcanvas"></canvas>
+    <p>
+    <button type="button" id="motionbtn">モーションチェンジ</button>
+    <input id="range" type="range" value="10" min="10" max="100">(1.0 to 10.0)
+    </p>
+    <!-- Live2D Library -->
+    <script src="//simplecode.jp/Live2D_DragDrop/lib/live2d.min.js"></script>
+    <script src="//simplecode.jp/Live2D_DragDrop/framework/Live2DFramework.js"></script>
+    <!-- 行列計算用 -->
+    <script src="src/minMatrix.js"></script>
+    <!-- User's Script -->
+    <script src="src/Simple.js"></script>
+</body>
+</html>
