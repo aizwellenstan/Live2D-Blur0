@@ -1,4 +1,4 @@
-# Live2D_Blur0
+# Live2D-Blur0
 Live2D WebGL版で目だけ髪を光らせるサンプルです。
 ガウシアンブラー方式です。
 Live2D公式サンプルからモデルをDownloadしてきてassets配下にセットすれば使えます。
